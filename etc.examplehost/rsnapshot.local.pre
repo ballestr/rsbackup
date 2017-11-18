@@ -1,0 +1,9 @@
+#!/bin/bash
+renice 10 $$ >/dev/null
+
+## hotcopy backup SVN to another path
+for repod in /data/svn/* ; do
+  repo=$(basename $repod)
+  rm -rf /data/svnbak/$repo
+  svnadmin hotcopy /data/svn/$repo /data/svnbak/$repo
+done

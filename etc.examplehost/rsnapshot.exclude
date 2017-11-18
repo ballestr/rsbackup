@@ -1,0 +1,33 @@
+## Exclude patterns for rsync
+.cache/
+*~
+*.bak
+tmp/
+.mozilla/
+.svn/pristine
+/etc/*.cache
+/etc/termcap
+/etc/gconf/
+/etc/selinux/targeted/modules/active/base*
+/etc/selinux/targeted/modules/previous/
+/etc/portforward/
+
+## Synology Network shares
+Network Trash Folder/
+TheFindByContentFolder/
+Temporary Items/
+
+## Dovecot Maildir
+dovecot.index.cache
+dovecot.index.log
+.Maildir/.Trash/
+.Maildir/.Junk/
+
+## Special patterns
+synoreport/Storage/
+transmission/resume/
+transmission/torrents/
+transmission/blocklists/
+var/MailRoot/spool/
+BACKUP_srv2/
+xmail_*.tgz

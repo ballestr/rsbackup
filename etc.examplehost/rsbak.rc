@@ -1,0 +1,24 @@
+#!/bin/bash # hint for syntaxhilight
+## configuration for rsbackup
+HOST=$(hostname -s)
+FROM=rsbackup@$(hostname -f)
+#MAILTO=your@email.domain
+MAILTO=root
+LOGDIR=/var/log/rsbackup
+
+## Enable to have a Synology beep on failure
+# SYNOBEEP="true"
+
+## Hours for fresh/stale status
+FRESHMAX=24
+## Cleanup timeouts for rotation
+OLD_DAILY=$[3*7]
+OLD_WEEKLY=$[12*7]
+
+DEBUG=true
+
+## add to cron path
+## /opt/bin required for Synology Linux + entware/optware
+PATH="/usr/sbin:/sbin:/opt/bin:$PATH"
+
+#BODY=$(mktemp /var/tmp/rsbackup.mailbody.XXXXXXXXXX)

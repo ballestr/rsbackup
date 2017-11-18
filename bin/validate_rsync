@@ -1,0 +1,36 @@
+#!/bin/sh
+PATH="/opt/bin:$PATH" ## for rsync on Synology
+
+#echo `date` "$SSH_CLIENT" "'$SSH_ORIGINAL_COMMAND'" >> /var/log/validate_rsync
+case "$SSH_ORIGINAL_COMMAND" in
+*\&*)
+echo "Rejected"
+;;
+*\(*)
+echo "Rejected"
+;;
+*\{*)
+echo "Rejected"
+;;
+*\;*)
+echo "Rejected"
+;;
+*\<*)
+echo "Rejected"
+;;
+*\`*)
+echo "Rejected"
+;;
+*\|*)
+echo "Rejected"
+;;
+rsync\ --server\ --sender*)
+nice ionice -n7 $SSH_ORIGINAL_COMMAND
+;;
+rsbackreport.sh\ *)
+/opt/rsbak/bin/$SSH_ORIGINAL_COMMAND
+;;
+*)
+echo "Rejected"
+;;
+esac
