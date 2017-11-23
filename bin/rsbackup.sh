@@ -3,7 +3,7 @@
 ## with nice e-mails even on Synology ;-)
 ## Sergio Ballestrero, Jan 2017
 
-. /opt/rsbak/etc/rsbak.rc || exit 1
+. /opt/rsbak/etc/rsbackup.rc || exit 1
 LOG=/var/log/rsbackup.log
 ##--- end config
 

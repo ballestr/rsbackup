@@ -2,15 +2,20 @@
 ## send status mail for rsbak
 ## Sergio.Ballestero@gmail.com January 2017
 
-. /opt/rsbak/etc/rsbak.rc || exit 1
+. /opt/rsbak/etc/rsbackup.rc || exit 1
 
 ## add to cron path
 PATH="/usr/sbin:/sbin:$PATH"
 
 function rsback_status {
 status="OK"
-if grep -q FAIL $LOGDIR/*.status ; then
+shopt -s nullglob
+if [ $LOGDIR/*.status ]; then
+  if grep -q FAIL $LOGDIR/*.status ; then
     status="FAIL"
+  fi
+else
+   status="NOSTATUS"
 fi
 stale=$(find $LOGDIR -name "*.status" -mmin +$[60*$FRESHMAX+60])
 if [ "$stale" ]; then
@@ -38,7 +43,7 @@ if [ "${stale}${stalelog}" ]; then
     echo
 fi
 echo "** Status files content:"
-cat $LOGDIR/*.status
+[ $LOGDIR/*.status ] && cat $LOGDIR/*.status
 if [ "$DEBUG" ]; then
   echo
   echo "** DEBUG: Files in $LOGDIR:"

@@ -3,7 +3,7 @@
 ## sergio.ballestrero@gmail.com, 2011
 ## sergio.ballestrero@gmail.com, Jan 2017
 ##
-. /opt/rsbak/etc/rsbak.rc || exit 1
+. /opt/rsbak/etc/rsbackup.rc || exit 1
 
 
 if ! [ -f "$1" ] ; then
