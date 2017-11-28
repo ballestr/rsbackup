@@ -9,18 +9,20 @@
 #ls -la /opt/rsbak || exit
 cd /opt/rsbak || exit
 
-[ -d etc ] || { echo "no etc configuration directory"; exit 1; }
-
-R=0
+[ -d etc ] || { echo "## configtest: no etc configuration directory"; exit 1; }
+[ -f etc/rsbackup.rc ] || { echo "## configtest: no etc/rsbackup.rc file"; exit 1; }
 
 RSA=/root/.ssh/id_rsa_rsbackup
 if ! [ -f $RSA ] ; then
-    echo "missing $RSA"
+    echo "missing ssh key $RSA"
     R=$[R+1]
 fi
 
+R=0
+N=0
 shopt -s nullglob
 for cfg in etc/rsnapshot.*.conf; do
+    N=$[N+1]
     echo -n "## Checking $(basename $cfg):  "
     rsnapshot -v -c $cfg configtest
     r=$?
@@ -40,8 +42,13 @@ for cfg in etc/rsnapshot.*.conf; do
     done
 done
 
+if [ $N -eq 0 ]; then
+    echo "## configtest: no rsnapshot config, client only OK"
+    exit 0
+fi
+
 if [ -d /etc/cron.d ]; then
-  cronfile="/etc/cron.d/rsbackup_cron"
+  cronfile="/etc/cron.d/rsbackup_status_cron"
   if ! [ -f $cronfile ] ; then
      echo "Missing crontab file $cronfile"
      R=$[R+1]
@@ -49,7 +56,7 @@ if [ -d /etc/cron.d ]; then
 else
   ## Synology DSM only uses /etc/crontab :-(
   grep "/opt/rsbak" /etc/crontab > .tmp_crontab.rsbak
-  if ! diff -s etc/rsbak.cron .tmp_crontab.rsbak ; then
+  if ! diff -s etc/rsbackup.cron .tmp_crontab.rsbak ; then
     echo "* /etc/crontab out of sync"
     R=$[R+1]
     #echo "# updating /etc/crontab"
