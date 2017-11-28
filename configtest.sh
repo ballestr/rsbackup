@@ -12,19 +12,33 @@ cd /opt/rsbak || exit
 [ -d etc ] || { echo "no etc configuration directory"; exit 1; }
 
 R=0
-shopt -s nullglob
-for cfg in etc/rsnapshot.*.conf; do
-    echo -n "## Checking $(basename $cfg):  "
-    rsnapshot -v -c $cfg configtest
-    r=$?
-    R=$[R+r]
-done
 
 RSA=/root/.ssh/id_rsa_rsbackup
 if ! [ -f $RSA ] ; then
     echo "missing $RSA"
     R=$[R+1]
 fi
+
+shopt -s nullglob
+for cfg in etc/rsnapshot.*.conf; do
+    echo -n "## Checking $(basename $cfg):  "
+    rsnapshot -v -c $cfg configtest
+    r=$?
+    R=$[R+r]
+    DIR=$(egrep "^snapshot_root" $cfg | awk '{print $2}') 2>/dev/null
+    if ! [ -d $DIR ]; then
+	echo "### checking snapshot_root '$DIR' : not present or not a directory"
+	R=$[R+1]
+    fi
+    ## check SSH
+    sshdest=$(grep ^backup $cfg | grep @ | cut -f2 | cut -d: -f1 | sort | uniq)
+    for sd in $sshdest; do 
+	echo "### checking SSH : ssh -F etc/ssh.config $sd rsbackreport.sh configtest :"
+	ssh -F etc/ssh.config $sd rsbackreport.sh configtest
+	r=$?
+	R=$[R+r]
+    done
+done
 
 if [ -d /etc/cron.d ]; then
   cronfile="/etc/cron.d/rsbackup_cron"
@@ -33,6 +47,7 @@ if [ -d /etc/cron.d ]; then
      R=$[R+1]
   fi
 else
+  ## Synology DSM only uses /etc/crontab :-(
   grep "/opt/rsbak" /etc/crontab > .tmp_crontab.rsbak
   if ! diff -s etc/rsbak.cron .tmp_crontab.rsbak ; then
     echo "* /etc/crontab out of sync"
@@ -44,6 +59,7 @@ else
     #cat crontab.clean etc/rsbak.cron > /etc/crontab
     #killall -s HUP crond
   fi
+  rm .tmp_crontab.rsbak
 fi
 echo "## configtest result: $R"
 exit $R
