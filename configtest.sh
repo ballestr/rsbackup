@@ -9,16 +9,24 @@
 #ls -la /opt/rsbak || exit
 cd /opt/rsbak || exit
 
-[ -d etc ] || { echo "no etc configuration directory"; exit 1; }
+[ -d etc ] || { echo "## configtest: no etc configuration directory"; exit 1; }
+[ -f etc/rsbackup.rc ] || { echo "## configtest: no etc/rsbackup.rc file"; exit 1; }
 
 R=0
+N=0
 shopt -s nullglob
 for cfg in etc/rsnapshot.*.conf; do
     echo -n "## Checking $(basename $cfg):  "
     rsnapshot -v -c $cfg configtest
     r=$?
     R=$[R+r]
+    N=$[N+1]
 done
+
+if [ $N -eq 0 ]; then
+    echo "## configtest: no rsnapshot config, client only OK"
+    exit 0
+fi
 
 RSA=/root/.ssh/id_rsa_rsbackup
 if ! [ -f $RSA ] ; then
