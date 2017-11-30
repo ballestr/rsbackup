@@ -10,7 +10,8 @@ PATH="/usr/sbin:/sbin:$PATH"
 function rsback_status {
 status="OK"
 shopt -s nullglob
-if [ $LOGDIR/*.status ]; then
+F=$LOGDIR/*.status
+if ls $F >/dev/null ; then
   if grep -q FAIL $LOGDIR/*.status ; then
     status="FAIL"
   fi
@@ -43,7 +44,7 @@ if [ "${stale}${stalelog}" ]; then
     echo
 fi
 echo "** Status files content:"
-[ $LOGDIR/*.status ] && cat $LOGDIR/*.status
+ls $LOGDIR/*.status >/dev/null  && cat $LOGDIR/*.status
 if [ "$DEBUG" ]; then
   echo
   echo "** DEBUG: Files in $LOGDIR:"
