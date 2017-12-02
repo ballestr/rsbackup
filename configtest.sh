@@ -38,6 +38,7 @@ for cfg in etc/rsnapshot.*.conf; do
 	echo "### checking SSH : ssh -F etc/ssh.config $sd rsbackreport.sh configtest :"
 	ssh -F etc/ssh.config $sd rsbackreport.sh configtest
 	r=$?
+	[ $r -eq 0 ] || echo "-- failed, r=$r"
 	R=$[R+r]
     done
 done

@@ -26,9 +26,11 @@ if ! [ -f $RSA ] ; then
 fi
 
 if [ -d /etc/cron.d ]; then
-  cp etc/rsbak.cron /etc/cron.d/rsbak_cron
-  rm -f /etc/cron.d/rsbak.cron
+  cp -a etc/rsbackup_*_cron /etc/cron.d/
+  rm -f /etc/cron.d/rsbak.cron /etc/cron.d/rsbak_cron
+  killall -s HUP crond
 else
+  ## Synology DSM v5 has no crontab
   grep "/opt/rsbak" /etc/crontab > .tmp_crontab.rsbak
   if ! diff -s etc/rsbak.cron .tmp_crontab.rsbak ; then
     echo "# updating /etc/crontab"
