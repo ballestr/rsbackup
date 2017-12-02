@@ -30,14 +30,15 @@ if [ -d /etc/cron.d ]; then
   rm -f /etc/cron.d/rsbak.cron /etc/cron.d/rsbak_cron
   killall -s HUP crond
 else
-  ## Synology DSM v5 has no crontab
+  ## Synology DSM v5 has no /etc/cron.d unfortunately
   grep "/opt/rsbak" /etc/crontab > .tmp_crontab.rsbak
-  if ! diff -s etc/rsbak.cron .tmp_crontab.rsbak ; then
+  if ! diff -s etc/rsbackup.cron .tmp_crontab.rsbak ; then
     echo "# updating /etc/crontab"
     #echo "# cp crontab /etc/crontab; killall -s HUP crond"
     cp /etc/crontab /etc/crontab.bak.$(date +%Y%m%d%H%M)
     grep -v "/opt/rsbak" /etc/crontab > .tmp_crontab.clean
-    cat crontab.clean etc/rsbak.cron > /etc/crontab
+    cat crontab.clean etc/rsbackup.cron > /etc/crontab
     killall -s HUP crond
   fi
+  rm -f .tmp_crontab.rsbak .tmp_crontab.clean
 fi
