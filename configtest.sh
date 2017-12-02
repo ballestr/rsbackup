@@ -6,8 +6,11 @@
 
 ## [ -d /opt/etc ] || exit 1 # check for Synology? no...
 
+DIR=/opt/rsbak
+SSHCFG=$DIR/etc/ssh.config
+
 #ls -la /opt/rsbak || exit
-cd /opt/rsbak || exit
+cd $DIR || exit
 
 [ -d etc ] || { echo "## configtest: no etc configuration directory"; exit 1; }
 [ -f etc/rsbackup.rc ] || { echo "## configtest: no etc/rsbackup.rc file"; exit 1; }
@@ -34,13 +37,25 @@ for cfg in etc/rsnapshot.*.conf; do
     fi
     ## check SSH
     sshdest=$(grep ^backup $cfg | grep @ | cut -f2 | cut -d: -f1 | sort | uniq)
-    for sd in $sshdest; do 
-	echo "### checking SSH : ssh -F etc/ssh.config $sd rsbackreport.sh configtest :"
-	ssh -F etc/ssh.config $sd rsbackreport.sh configtest
-	r=$?
-	[ $r -eq 0 ] || echo "-- failed, r=$r"
-	R=$[R+r]
-    done
+    if [ "$sshdest" ]; then
+        echo -n "### checking config $cfg for ssh_args containing '-F $SSHCFG': "
+	egrep -q "^ssh_args.*-F $SSHCFG" $cfg
+	if [ $? -ne 0 ]; then
+	    echo "failed:"
+	    egrep "ssh_args" $cfg
+	    R=$[R+1]
+	else
+	    echo "OK"
+	fi
+        for sd in $sshdest; do 
+	    echo "### checking SSH : ssh -F $SSHCFG $sd rsbackreport.sh configtest :"
+	    ssh -F $SSHCFG $sd rsbackreport.sh configtest
+	    r=$?
+	    [ $r -eq 0 ] || echo "-- failed, r=$r"
+	    R=$[R+r]
+	done
+    fi
+
 done
 
 if [ $N -eq 0 ]; then
