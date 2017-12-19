@@ -30,7 +30,7 @@ function rsback_status() {
     if [ "$stalelog" ]; then
         status="STALELOG $status"
     fi
-    [ $status = "OK" ] || level="error"
+    [ "$status" = "OK" ] || level="error"
     logger -t rsbackup -p user.$level "status check $STATUS"
 
     ## Mail headers
@@ -46,7 +46,7 @@ function rsback_status() {
         echo "** ERROR: Stale status/log files found (>$FRESHMAX hours):"
         for f in $stale $stalelog; do
             ls -la $f
-            cat $f
+            tail -n5 $f
         done
         echo "**"
         echo
@@ -54,7 +54,7 @@ function rsback_status() {
     echo "** Status files content:"
     ls $LOGDIR/*.status >/dev/null  && cat $LOGDIR/*.status
     if [ "$MODE" = "--nagios" ]; then
-        [ $status = "OK" ] || return 1
+        [ "$status" = "OK" ] || return 1
         return 0
     fi
     if [ "$DEBUG" ]; then
