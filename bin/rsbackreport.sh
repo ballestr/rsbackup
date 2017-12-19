@@ -9,6 +9,9 @@ CFGB=$1
 status=$2
 [ "$CFGB" ] || exit 1
 if [ "$CFGB" = "configtest" ] ; then
+    which nice >/dev/null || echo "nice not found"
+    which ionice >/dev/null || echo "ionice not found"
+    which rsync >/dev/null || echo "rsync not found"
     echo "rsbackreport.sh $CFGB from $SSH_CLIENT OK $(date '+%Y-%m-%d %H:%M')"
     exit 0
 else
