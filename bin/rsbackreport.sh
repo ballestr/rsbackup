@@ -5,8 +5,8 @@
 #echo $@
 #set
 
-CFGB=$1
-status=$2
+CFGB="${1//[^:._[:alnum:]]/_}"
+status="${2//[^:._[:alnum:]]/_}"
 [ "$CFGB" ] || exit 1
 if [ "$CFGB" = "configtest" ] ; then
     which nice >/dev/null || echo "nice not found"
