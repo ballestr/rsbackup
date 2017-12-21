@@ -2,5 +2,5 @@
 30  7    *   *   *  root	/opt/rsbak/bin/rsbackstatus.sh -m
  5  */4  *   *   *  root	/opt/rsbak/bin/rsbackup.sh      /opt/rsbak/etc/rsnapshot.local.conf
 45  18   *   *   *  root	/opt/rsbak/bin/rsbackrotate.sh  /opt/rsbak/etc/rsnapshot.local.conf
-15  */4  *   *   *  root	/opt/rsbak/bin/rsbackup.sh      /opt/rsbak/etc/rsnapshot.remote1.conf
+15  19   *   *   *  root	/opt/rsbak/bin/rsbackup.sh      /opt/rsbak/etc/rsnapshot.remote1.conf
 45  19   *   *   *  root	/opt/rsbak/bin/rsbackrotate.sh  /opt/rsbak/etc/rsnapshot.remote1.conf
