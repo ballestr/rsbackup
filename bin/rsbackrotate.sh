@@ -20,7 +20,7 @@ mkdir -p $LOGDIR
 LOG=$LOGDIR/$CFGB.rotate.log
 
 
-echo "$(date -Iseconds) Start $CFGB" | tee -a $LOG >> $BODY
+echo "$(date -Iseconds) Start rsbackup rotate $CFGB" | tee -a $LOG >> $BODY
 echo "  CONF=$CONF" >> $BODY
 echo "  DIR =$DIR" >> $BODY
 TODAY=$(date +%Y-%m-%d)
@@ -96,6 +96,10 @@ done
 ## Cleanup of old copies
 
 #set +x
+## Cleanup daily directories 
+## only if there is a more recent weekly
+recentWeekly=$(find $DIR/auto_*_weekly_* -maxdepth 0 -mtime -$OLD_DAILY 2>/dev/null)
+if [ "$recentWeekly" ] ; then
 for OLD in $(find $DIR/auto_*_daily_* -maxdepth 0 -mtime +$OLD_DAILY 2>/dev/null); do
     d=$(basename $OLD)
     ## Paranoid sanity check, only remove "auto" directories
@@ -104,6 +108,13 @@ for OLD in $(find $DIR/auto_*_daily_* -maxdepth 0 -mtime +$OLD_DAILY 2>/dev/null
     rm -rf $OLD
     CHANGESday=$[CHANGESday+1]
 done
+fi
+
+DELETED=0
+## Cleanup weekly directories 
+## only if there is a more recent monthly
+recentMonthly=$(find $DIR/auto_*_monthly_* -maxdepth 0 -mtime -$OLD_WEEKLY 2>/dev/null)
+if [ "$recentMonthly" ] ; then
 for OLD in $(find $DIR/auto_*_weekly_* -maxdepth 0 -mtime +$OLD_WEEKLY 2>/dev/null); do
     d=$(basename $OLD)
     ## Paranoid sanity check, only remove "auto" directories
@@ -111,21 +122,39 @@ for OLD in $(find $DIR/auto_*_weekly_* -maxdepth 0 -mtime +$OLD_WEEKLY 2>/dev/nu
     echo "  Removing $d" | tee -a $LOG >> $BODY
     rm -rf $OLD
     CHANGES=$[CHANGES+1]
+    ## sanity check: do not delete more than two weekly at a time
+    ## just in case the system date has gone crazy
+    DELETED=$[DELETED+1]
+    if [ $DELETED -gt 2 ]; then
+        break
+    fi
 done
-## no cleanup for monthly...
+fi
+## no cleanup for monthly... if you care about your backups you can look at them once a year ;-)
 
 echo "$(date -Iseconds) done. CHANGES=$CHANGES CHANGESday=$CHANGESday" | tee -a $LOG >> $BODY
 
 logger -t rsbackup -p user.warn "rotate $CHANGES $CHANGESday"
 
+## write a status file if anything has been touched
+STF="$LOGDIR/$CFGB.rot.status"
+if [ $CHANGES -gt 0 -o $CHANGESday -gt 0 ] ; then
+    if [ $CHANGES -eq 999 ] ; then ST="FAIL"; else ST="OK  "; fi
+    echo "$ST $(date +'%Y-%m-%d %H:%M') $CFGB changes $CHANGES/$CHANGESday in $DIR" > $STF
+fi
+## if there is no status file, create one so it can go stale if no rotation is done
+if ! [ -f $STF ]; then
+    echo "WAIT $(date +'%Y-%m-%d %H:%M') $CFGB waiting for first HOURLY in $DIR" > $STF
+fi
+
 ## report if there is any change except adding/removing a daily
+if [ $CHANGES -eq 999 ] ; then ST="FAIL"; else ST="OK $CHANGES changes"; fi
 if [ $CHANGES -gt 0 -o $CHANGESday -gt 2 ] ; then
   echo -e "\n\n----------------------------------------" >> $BODY
   if [ -d $DIR ] ; then
     df -h $DIR >> $BODY
     ls -latd $DIR/auto*  >> $BODY
   fi
-  if [ $CHANGES -eq 999 ] ; then ST="FAIL"; else ST="$CHANGES changes"; fi
   if [ -t 0 ]; then
     echo "[RSBAK/$HOST] rotate $CFGB $ST"
     cat $BODY
@@ -135,6 +164,11 @@ if [ $CHANGES -gt 0 -o $CHANGESday -gt 2 ] ; then
       echo -e "Subject: [RSBAK/$HOST] rotate $CFGB $ST\n\n"
       cat $BODY
     ) | /usr/sbin/sendmail $MAILTO >$LOGDIR/$CFGB.rotatemail.out 2>&1
+  fi
+else
+  if [ -t 0 ]; then
+    echo "[RSBAK/$HOST] rotate $CFGB $ST"
+    cat $BODY
   fi
 fi
 
