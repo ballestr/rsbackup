@@ -152,7 +152,7 @@ if [ $CHANGES -eq 999 ] ; then ST="FAIL"; else ST="OK $CHANGES changes"; fi
 if [ $CHANGES -gt 0 -o $CHANGESday -gt 2 ] ; then
   echo -e "\n\n----------------------------------------" >> $BODY
   if [ -d $DIR ] ; then
-    df -h $DIR >> $BODY
+    df -hP $DIR >> $BODY
     ls -latd $DIR/auto*  >> $BODY
   fi
   if [ -t 0 ]; then
