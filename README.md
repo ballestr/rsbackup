@@ -77,14 +77,17 @@ The `configcheck.sh` script helps spotting typical configuration issues.
 ## `bash` on Synology and other Linuxes
 Note that the shell scripts here use `/opt/bin/bash`, for compatibility with Synology Linux with opkg or similar.  
 If you're using this on a standard linux you'll have to change shebang or add a `/opt/bin/bash -> /bin/bash` symlink.
-Unfortunately adding a `/bin/bash -> /opt/bin/bash` on Synology triggers the security alerts, so that is no-go.
+Unfortunately adding a `/bin/bash -> /opt/bin/bash` symlink on Synology triggers the security alerts, so that seems no-go. 
+Alternative suggestions are welcome.
 
 ## ToDo:
 - [x] Puppet module for server and target configuration: https://github.com/ballestr/puppet-rsbackup
-- [ ] Ansible role for server and target configuration
+- [ ] fix rsbakstatus on no files present
+- [ ] Ansible role for server and target configuration (done, to be published)
 - [ ] Use a more restrictive sudo on the target side instead of root login.
 - [ ] Unify status and rotate report emails
-- [ ] Provide a nagios/icinga check script, or add the functionality in `rsbackstatus.sh`
-- [ ] Let `rsbackup.sh` run multiple rsnapshot configurations, to simplify crontabs
-- [ ] `rsbackrotate.sh` should check the lock file
-
+- [x] Provide a nagios/icinga check script, or add the functionality in `rsbackstatus.sh`
+- [x] Let `rsbackup.sh` run multiple rsnapshot configurations, to simplify crontabs (done as `rsbackrotate_seq.sh`)
+- [ ] `rsbackrotate.sh` should check the lock file, to avoid the risk of copying an incomplete `hourly.0`
+- [ ] support for a temporarily disabled target host, e.g. cp/rsync missing dirs from `hourly.0' to `.sync` 
+- [ ] how would the rotation fail if the retain nr is too few to last one day? fix/check ? noticed by `rsbackupstatus.sh`?
