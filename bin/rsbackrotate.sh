@@ -122,7 +122,7 @@ logger -t rsbackup -p user.warn "rotate $CHANGES $CHANGESday"
 if [ $CHANGES -gt 0 -o $CHANGESday -gt 2 ] ; then
   echo -e "\n\n----------------------------------------" >> $BODY
   if [ -d $DIR ] ; then
-    df -h $DIR >> $BODY
+    df -hP $DIR >> $BODY
     ls -latd $DIR/auto*  >> $BODY
   fi
   if [ $CHANGES -eq 999 ] ; then ST="FAIL"; else ST="$CHANGES changes"; fi
