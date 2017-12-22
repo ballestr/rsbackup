@@ -14,9 +14,9 @@ function rsback_status() {
     local status="OK"
     local level="notice"
     shopt -s nullglob
-    local F=$LOGDIR/*.status
-    if ls $F >/dev/null ; then
-        if grep -q FAIL $LOGDIR/*.status ; then
+    local F="$(find $LOGDIR -name '*.status')" # using find seems the only reliable way
+    if [ "$F" ] ; then
+        if grep -q FAIL $F ; then
             status="FAIL"
         fi
     else
