@@ -140,11 +140,11 @@ logger -t rsbackup -p user.warn "rotate $CHANGES $CHANGESday"
 STF="$LOGDIR/$CFGB.rot.status"
 if [ $CHANGES -gt 0 -o $CHANGESday -gt 0 ] ; then
     if [ $CHANGES -eq 999 ] ; then ST="FAIL"; else ST="OK  "; fi
-    echo "$ST $(date +'%Y-%m-%d %H:%M') $CFGB changes $CHANGES/$CHANGESday in $DIR" > $STF
+    echo "$ST $(date +'%Y-%m-%d %H:%M') $CFGB rotate changes $CHANGES/$CHANGESday in $DIR" > $STF
 fi
 ## if there is no status file, create one so it can go stale if no rotation is done
 if ! [ -f $STF ]; then
-    echo "WAIT $(date +'%Y-%m-%d %H:%M') $CFGB waiting for first HOURLY in $DIR" > $STF
+    echo "WAIT $(date +'%Y-%m-%d %H:%M') $CFGB rotate waiting for first HOURLY in $DIR" > $STF
 fi
 
 ## report if there is any change except adding/removing a daily
