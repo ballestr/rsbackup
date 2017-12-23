@@ -7,5 +7,5 @@ for cfg in $@ ; do
 done
 ## Do all rotations after
 for cfg in $@ ; do
-    $DIR/bin/rsbackup.sh $DIR/etc/rsnapshot.$cfg.conf
+    $DIR/bin/rsbackrotate.sh $DIR/etc/rsnapshot.$cfg.conf
 done

@@ -72,7 +72,15 @@ ssh_args	-F /opt/rsbak/etc/ssh.config
 
 The `install.sh` script helps in the setup, especially with merging the `/etc/crontab` on Synology DSM 5. The Puppet module or the Ansible task (in preparation) are recommended.
 
+
+## Configuration checking
 The `configcheck.sh` script helps spotting typical configuration issues.
+Some other config issue cannot be found by configcheck:
+* insufficient `retain hourly`:
+ the rsnapshot will work, but the `rot.status` will go STALE if there is no `hourly.X` from the day before for rsbackuprotate, because it gets deleted by rsnapshot.
+ Make sure that the `retain` matches or exceeds the number of rsbackup invocations per day in crontab. 
+* same `snapshot_root` in multiple configs: 
+  use `configsummary.sh` to check manually
 
 ## `bash` on Synology and other Linuxes
 Note that the shell scripts here use `/opt/bin/bash`, for compatibility with Synology Linux with opkg or similar.  
@@ -82,7 +90,9 @@ Alternative suggestions are welcome.
 
 ## ToDo:
 - [x] Puppet module for server and target configuration: https://github.com/ballestr/puppet-rsbackup
-- [ ] fix rsbakstatus on no files present
+- [x] fix rsbakstatus on no files present
+- [ ] configtest check for same `snapshot_root` in multiple configs
+- [ ] rsbakstatus --mailerr to only send mails on errors
 - [ ] Ansible role for server and target configuration (done, to be published)
 - [ ] Use a more restrictive sudo on the target side instead of root login.
 - [ ] Unify status and rotate report emails
