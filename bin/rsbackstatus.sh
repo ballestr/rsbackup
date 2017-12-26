@@ -43,25 +43,25 @@ function rsback_status() {
     fi
     if [ "${stale}${stalelog}" ]; then
         echo
-        echo "** ERROR: Stale status/log files found (>$FRESHMAX hours):"
+        echo "** ERROR: Stale status/log files found (>$FRESHMAX hours) in $LOGDIR :"
         for f in $stale $stalelog; do
-            echo "** $(basename $f)"
-            ls -la $f | sed 's/^/  /'
+            echo "** $(basename $f) :" # $(stat --format='%z' $f)"
+            ls -la $f | sed 's/^/  # /'
             tail -n5 $f | sed 's/^/  /'
         done
         echo "**"
         echo
     fi
     echo "** Status files content:"
-    ls $LOGDIR/*.status >/dev/null  && cat $LOGDIR/*.status
+    ls $LOGDIR/*.status >/dev/null  && cat $(ls $LOGDIR/*.status) ## ls to sort
     if [ "$MODE" = "--nagios" ]; then
         [ "$status" = "OK" ] || return 1
         return 0
     fi
     if [ "$DEBUG" ]; then
         echo
-        echo "** DEBUG: Files in $LOGDIR:"
-        (cd $LOGDIR && ls -la *.status)
+        echo "** DEBUG: Files in $LOGDIR by date:"
+        (cd $LOGDIR && ls -lat *.status)
     fi
 }
 
