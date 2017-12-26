@@ -57,7 +57,7 @@ if [ $R -ne 0 ] ; then
 else
   status="OK  "
 fi
-echo "$status $(date '+%Y-%m-%d %H:%M') $CFGB">$LOGDIR/$CFGB.status
+echo "$status $(date '+%Y-%m-%d %H:%M') $CFGB rsnapshot">$LOGDIR/$CFGB.status
 # report result to remote hosts
 for host in $(egrep "^backup.*@" $CFG | sed 's/.*\t\(.*\):.*/\1/' | uniq) ; do #'confusedmc
    ssh -F /opt/rsbak/etc/ssh.config $host "rsbackreport.sh $HOSTNAME:$CFGB $status " 2>&1 >>$BODY
