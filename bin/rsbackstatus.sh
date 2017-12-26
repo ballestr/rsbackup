@@ -45,8 +45,9 @@ function rsback_status() {
         echo
         echo "** ERROR: Stale status/log files found (>$FRESHMAX hours):"
         for f in $stale $stalelog; do
-            ls -la $f
-            tail -n5 $f
+            echo "** $(basename $f)"
+            ls -la $f | sed 's/^/  /'
+            tail -n5 $f | sed 's/^/  /'
         done
         echo "**"
         echo
