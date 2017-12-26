@@ -38,9 +38,9 @@ CHANGES=0
 CHANGESday=0
 
 if [ -f "$LOCK" ]; then
-    echo "$(date -Iseconds) wait on $LOCK" | tee -a $LOG >> $BODY
+    echo "$(date -Iseconds) wait max $MAXWAIT min on $LOCK" | tee -a $LOG >> $BODY
     while [ -f "$LOCK" ]; do
-        [ -t 0 ] && echo "$(date -Iseconds) found lockfile $LOCK ='$(<$LOCK)' $(ls -l $LOCK)"
+        [ -t 0 ] && echo "$(date -Iseconds) wait $MAXWAIT found lockfile $LOCK ='$(<$LOCK)' $(ls -l $LOCK)"
         sleep 60
         MAXWAIT=$[MAXWAIT-1]
         [ $MAXWAIT -gt 0 ] || break
