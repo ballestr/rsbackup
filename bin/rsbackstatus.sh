@@ -10,8 +10,8 @@
 PATH="/usr/sbin:/sbin:$PATH"
 
 function rsback_status() {
+    status="OK"
     local MODE=$1
-    local status="OK"
     local level="notice"
     shopt -s nullglob
     local F="$(find $LOGDIR -name '*.status')" # using find seems the only reliable way
@@ -64,8 +64,17 @@ function rsback_status() {
     fi
 }
 
-if [ "$1" = "-m" -o "$1" = "--mail" ]; then
-    rsback_status --mail  2>&1 | sendmail $MAILTO
+declare status
+if [ "$1" = "-m" -o "$1" = "--mail" -o "$1" = "--mailerr" ]; then
+    mailfile=$(mktemp /var/tmp/rsbackstatus.XXXXXXXX)
+    rsback_status --mail  2>&1 > $mailfile
+    if [ $1 != "--mailerr" -o "$status" != "OK" ]; then
+        cat $mailfile | sendmail $MAILTO
+        [ -t 0 ] && echo "status='$status', mail sent to $MAILTO"
+    else
+        [ -t 0 ] && echo "status='$status', mail not sent to $MAILTO"
+    fi
+    rm -f $mailfile
 else
     rsback_status $1
 fi

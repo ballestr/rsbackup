@@ -92,7 +92,7 @@ Alternative suggestions are welcome.
 - [x] Puppet module for server and target configuration: https://github.com/ballestr/puppet-rsbackup
 - [x] fix rsbakstatus on no files present
 - [ ] configtest check for same `snapshot_root` in multiple configs
-- [ ] rsbakstatus --mailerr to only send mails on errors
+- [x] rsbakstatus --mailerr to only send mails on errors
 - [ ] Ansible role for server and target configuration (done, to be published)
 - [ ] Use a more restrictive sudo on the target side instead of root login.
 - [ ] Unify status and rotate report emails
