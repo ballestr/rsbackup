@@ -94,9 +94,9 @@ if [ $N -eq 0 ]; then
 fi
 
 if [ -d /etc/cron.d ]; then
-  cronfile="/etc/cron.d/rsbackup_status_cron"
-  if ! [ -f $cronfile ] ; then
-     echo "Missing crontab file $cronfile"
+  cronfile="/etc/cron.d/rsbackup_status*"
+  if [ -z "$(ls $cronfiles)" ] ; then
+     echo "Missing crontab files - at least $cronfile"
      R=$[R+1]
   fi
 else
