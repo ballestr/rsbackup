@@ -4,6 +4,7 @@
 ## sergio.ballestrero@gmail.com, Jan 2017
 ##
 . /opt/rsbak/etc/rsbackup.rc || exit 1
+[ "$MAXWAIT" ] || MAXWAIT=5 ## default max 5 minutes waiting for lock
 
 
 if ! [ -f "$1" ] ; then
@@ -15,20 +16,40 @@ BODY=$(mktemp /var/tmp/rsbackrotate.mailbody.XXXXXXXXXX)
 CONF=${1}
 CFGB=$(basename $CONF .conf)
 DIR=$(egrep "^snapshot_root" $CONF | awk '{print $2}')
-[ "$DIR" ] || exit 1
+LOCK=$(egrep "^lockfile" $CONF | awk '{print $2}')
+
+
+
 mkdir -p $LOGDIR
 LOG=$LOGDIR/$CFGB.rotate.log
 
 
 echo "$(date -Iseconds) Start rsbackup rotate $CFGB" | tee -a $LOG >> $BODY
 echo "  CONF=$CONF" >> $BODY
-echo "  DIR =$DIR" >> $BODY
+echo "  DIR =$DIR"  >> $BODY
+echo "  LOCK=$LOCK" >> $BODY
 TODAY=$(date +%Y-%m-%d)
+[ "$DIR" ] || { echo "## $CFGB : empty snapshot_root"; exit 1; }
+[ "$LOCK" ] || { echo "## $CFGB : empty lockfile"; exit 1; }
 
 # ls -ldt $DIR/hourly.* >> $LOG ## DEBUG
 
 CHANGES=0
 CHANGESday=0
+
+if [ -f "$LOCK" ]; then
+    echo "$(date -Iseconds) wait on $LOCK" | tee -a $LOG >> $BODY
+    while [ -f "$LOCK" ]; do
+        [ -t 0 ] && echo "$(date -Iseconds) found lockfile $LOCK ='$(<$LOCK)' $(ls -l $LOCK)"
+        sleep 60
+        MAXWAIT=$[MAXWAIT-1]
+        [ $MAXWAIT -gt 0 ] || break
+    done
+    if ! [ -f "$LOCK" ]; then
+        echo "$(date -Iseconds) done wait on $LOCK" | tee -a $LOG >> $BODY
+    fi
+fi
+
 ## Check that we have some reasonably-recent backup
 T=2
 if ! [ -d $DIR ]; then
@@ -39,6 +60,7 @@ elif ! find $DIR -maxdepth 1 -mtime -${T} -name "hourly*" >/dev/null 2>&1 ; then
     CHANGES=999
 fi
 
+function rotate_hourly {
 ## First, copy any new hourly backup if there is not a corrisponding daily
 ## go through them, most recent first, to try to get the latest one from yesterday
 for HOURLY in $(ls -dt $DIR/hourly.* 2>/dev/null); do
@@ -56,8 +78,9 @@ for HOURLY in $(ls -dt $DIR/hourly.* 2>/dev/null); do
     cp -al $HOURLY $DIR/$daily
     CHANGESday=$[CHANGESday+1] # do not report this
 done
+}
 
-
+function rotate_weekly {
 ## Now get one per week
 thisweek=$(date +%W)
 for D in $(ls -dt $DIR/auto_*_daily_* 2>/dev/null); do
@@ -74,7 +97,9 @@ for D in $(ls -dt $DIR/auto_*_daily_* 2>/dev/null); do
     #echo rm $D
     CHANGES=$[CHANGES+1]
 done
+}
 
+function rotate_monthly {
 ## Now get one per month
 thisyear=$(date +%Y)
 thismonth=$(date +%m)
@@ -92,9 +117,9 @@ for D in $(ls -dt $DIR/auto_*_weekly_* 2>/dev/null); do
     #echo rm $D
     CHANGES=$[CHANGES+1]
 done
-
+}
 ## Cleanup of old copies
-
+function rotate_cleanup() {
 #set +x
 ## Cleanup daily directories 
 ## only if there is a more recent weekly
@@ -130,7 +155,19 @@ for OLD in $(find $DIR/auto_*_weekly_* -maxdepth 0 -mtime +$OLD_WEEKLY 2>/dev/nu
     fi
 done
 fi
+
 ## no cleanup for monthly... if you care about your backups you can look at them once a year ;-)
+}
+
+if ! [ -f $LOCK ]; then
+    ## do not touch the hourly if rsnapshot is running
+    echo "  ALERT: skipping hourly, still running $LOCK ='$(<$LOCK)' $(ls -l $LOCK) " | tee -a $LOG >> $BODY
+    CHANGES=999
+    rotate_hourly
+fi
+rotate_weekly
+rotate_monthly
+rotate_cleanup
 
 echo "$(date -Iseconds) done. CHANGES=$CHANGES CHANGESday=$CHANGESday" | tee -a $LOG >> $BODY
 
@@ -152,8 +189,8 @@ if [ $CHANGES -eq 999 ] ; then ST="FAIL"; else ST="OK $CHANGES changes"; fi
 if [ $CHANGES -gt 0 -o $CHANGESday -gt 2 ] ; then
   echo -e "\n\n----------------------------------------" >> $BODY
   if [ -d $DIR ] ; then
-    df -hP $DIR >> $BODY
-    ls -latd $DIR/auto*  >> $BODY
+    df -hP $DIR 2>&1 >> $BODY
+    ls -latd $DIR/auto* 2>&1 >> $BODY
   fi
   if [ -t 0 ]; then
     echo "[RSBAK/$HOST] rotate $CFGB $ST"
