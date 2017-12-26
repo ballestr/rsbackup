@@ -5,9 +5,11 @@
 #echo $@
 #set
 
+## sanitise input
 CFGB="${1//[^:._-[:alnum:]]/_}"
 status="${2//[^:._-[:alnum:]]/_}"
 [ "$CFGB" ] || exit 1
+
 if [ "$CFGB" = "configtest" ] ; then
     which nice >/dev/null || echo "nice not found"
     which ionice >/dev/null || echo "ionice not found"
@@ -15,5 +17,6 @@ if [ "$CFGB" = "configtest" ] ; then
     echo "rsbackreport.sh $CFGB from $SSH_CLIENT OK $(date '+%Y-%m-%d %H:%M')"
     exit 0
 else
-    printf "%-4s %s\n" "$status"  "$(date '+%Y-%m-%d %H:%M') $CFGB [Remote $SSH_CLIENT]" >$LOGDIR/$CFGB.status
+    ## @ in front to help sorting in status reports
+    printf "%-4s %s\n" "$status"  "$(date '+%Y-%m-%d %H:%M') $CFGB [Remote $SSH_CLIENT]" >$LOGDIR/@$CFGB.status
 fi
