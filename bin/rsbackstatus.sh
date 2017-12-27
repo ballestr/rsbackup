@@ -6,6 +6,8 @@
 
 . /opt/rsbak/etc/rsbackup.rc || exit 1
 
+export LANG=C ## avoid funny stuff with sorting
+
 ## add to cron path
 PATH="/usr/sbin:/sbin:$PATH"
 
