@@ -32,6 +32,15 @@ function rsback_status() {
     if [ "$stalelog" ]; then
         status="STALELOG $status"
     fi
+    local F2="$(find $LOGDIR -name '*.status' -a -not -name '@*' -a -not -name '*.rotate.status')"
+    for f in $F2; do
+        strot="$LOGDIR/$(basename $f .status).rotate.status"
+        if ! [ -f "$strot" ] ; then
+            status="NOROT $status"
+            break
+        fi
+    done
+
     [ "$status" = "OK" ] || level="error"
     logger -t rsbackup -p user.$level "status check $STATUS"
 
@@ -43,6 +52,12 @@ function rsback_status() {
     else
         echo "$(date) Checking status files in $HOST:$LOGDIR : $status"
     fi
+    for f in $F2; do
+        strot="$LOGDIR/$(basename $f .status).rotate.status"
+        if ! [ -f "$strot" ] ; then
+            echo "** ERROR: not found matching $strot"
+        fi
+    done
     if [ "${stale}${stalelog}" ]; then
         echo
         echo "** ERROR: Stale status/log files found (>$FRESHMAX hours) in $LOGDIR :"
