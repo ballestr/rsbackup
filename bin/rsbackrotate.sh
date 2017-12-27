@@ -159,7 +159,7 @@ fi
 ## no cleanup for monthly... if you care about your backups you can look at them once a year ;-)
 }
 
-if ! [ -f $LOCK ]; then
+if [ -f $LOCK ]; then
     ## do not touch the hourly if rsnapshot is running
     echo "  ALERT: skipping hourly, still running $LOCK ='$(<$LOCK)' $(ls -l $LOCK) " | tee -a $LOG >> $BODY
     CHANGES=999
@@ -174,7 +174,7 @@ echo "$(date -Iseconds) done. CHANGES=$CHANGES CHANGESday=$CHANGESday" | tee -a 
 logger -t rsbackup -p user.warn "rotate $CHANGES $CHANGESday"
 
 ## write a status file if anything has been touched
-STF="$LOGDIR/$CFGB.rot.status"
+STF="$LOGDIR/$CFGB.rotate.status"
 if [ $CHANGES -gt 0 -o $CHANGESday -gt 0 ] ; then
     if [ $CHANGES -eq 999 ] ; then ST="FAIL"; else ST="OK  "; fi
     echo "$ST $(date +'%Y-%m-%d %H:%M') $CFGB rotate changes $CHANGES/$CHANGESday in $DIR" > $STF
