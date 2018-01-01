@@ -20,12 +20,22 @@ function rsback_status() {
     if [ "$F" ] ; then
         if grep -q FAIL $F ; then
             status="FAIL"
+            checkstatus=2
+        elif grep -q WAIT $F ; then
+            status="WAIT"
+        else
+            status="OK"
         fi
     else
-        status="NOSTATUS"
+        status="NOBACKUP"
+        checkstatus=2
     fi
     stale=$(find $LOGDIR -name "*.status" -mmin +$[60*$FRESHMAX+60])
     if [ "$stale" ]; then
+        if grep -q WAIT $F ; then
+            status="BADRETAIN $status"
+            checkstatus=2
+        fi
         status="STALE $status"
     fi
     stalelog=$(find $LOGDIR -name "*.log" -mmin +$[60*$FRESHMAX+60])
@@ -36,7 +46,8 @@ function rsback_status() {
     for f in $F2; do
         strot="$LOGDIR/$(basename $f .status).rotate.status"
         if ! [ -f "$strot" ] ; then
-            status="NOROT $status"
+            status="NOROTATION $status"
+            checkstatus=2
             break
         fi
     done
@@ -52,14 +63,17 @@ function rsback_status() {
     else
         echo "$(date) Checking status files in $HOST:$LOGDIR : $status"
     fi
+    ## check for each rsnapshot status to have a corresponding rotation status
     for f in $F2; do
         strot="$LOGDIR/$(basename $f .status).rotate.status"
         if ! [ -f "$strot" ] ; then
             echo "** ERROR: not found matching $strot"
         fi
     done
+    if [[ "$status" =~ "BADRETAIN" ]]; then
+        echo "** ERROR: Stale WAIT status found, most probably incorrect configuration of rsnapshot retain number"
+    fi
     if [ "${stale}${stalelog}" ]; then
-        echo
         echo "** ERROR: Stale status/log files found (>$FRESHMAX hours) in $LOGDIR :"
         for f in $stale $stalelog; do
             echo "** $(basename $f) :" # $(stat --format='%z' $f)"
@@ -72,6 +86,7 @@ function rsback_status() {
     echo "** Status files content:"
     ls $LOGDIR/*.status >/dev/null  && cat $(ls $LOGDIR/*.status) ## ls to sort
     if [ "$MODE" = "--nagios" ]; then
+        [ "$checkstatus" ] && return $checkstatus
         [ "$status" = "OK" ] || return 1
         return 0
     fi
