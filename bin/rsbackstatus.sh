@@ -67,7 +67,7 @@ function rsback_status() {
     for f in $F2; do
         strot="$LOGDIR/$(basename $f .status).rotate.status"
         if ! [ -f "$strot" ] ; then
-            echo "** ERROR: not found matching $strot"
+            echo "** ERROR: not found matching $(basename $strot) for $(basename $f)"
         fi
     done
     if [[ "$status" =~ "BADRETAIN" ]]; then
