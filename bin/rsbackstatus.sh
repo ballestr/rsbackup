@@ -16,6 +16,10 @@ function rsback_status() {
     local MODE=$1
     local level="notice"
     shopt -s nullglob
+
+    ## Note that wanting to have a summary status for the mail subject
+    ## led to some code duplications. This function probably should be rearranged overall.
+
     local F="$(find $LOGDIR -name '*.status')" # using find seems the only reliable way
     if [ "$F" ] ; then
         if grep -q FAIL $F ; then
@@ -30,6 +34,8 @@ function rsback_status() {
         status="NOBACKUP"
         checkstatus=2
     fi
+
+    ## Check for stale status files and logs
     stale=$(find $LOGDIR -name "*.status" -mmin +$[60*$FRESHMAX+60])
     if [ "$stale" ]; then
         if grep -q WAIT $F ; then
@@ -42,6 +48,8 @@ function rsback_status() {
     if [ "$stalelog" ]; then
         status="STALELOG $status"
     fi
+
+    ## check for each rsnapshot status to have a corresponding rotation status
     local F2="$(find $LOGDIR -name '*.status' -a -not -name '@*' -a -not -name '*.rotate.status')"
     for f in $F2; do
         strot="$LOGDIR/$(basename $f .status).rotate.status"
@@ -63,7 +71,8 @@ function rsback_status() {
     else
         echo "$(date) Checking status files in $HOST:$LOGDIR : $status"
     fi
-    ## check for each rsnapshot status to have a corresponding rotation status
+
+    ## report for each rsnapshot status to have a corresponding rotation status
     for f in $F2; do
         strot="$LOGDIR/$(basename $f .status).rotate.status"
         if ! [ -f "$strot" ] ; then
@@ -76,13 +85,16 @@ function rsback_status() {
     if [ "${stale}${stalelog}" ]; then
         echo "** ERROR: Stale status/log files found (>$FRESHMAX hours) in $LOGDIR :"
         for f in $stale $stalelog; do
-            echo "** $(basename $f) :" # $(stat --format='%z' $f)"
+            echo "-- $(basename $f) :" # $(stat --format='%z' $f)"
             ls -la $f | sed 's/^/  # /'
             tail -n5 $f | sed 's/^/  /'
         done
-        echo "**"
-        echo
+        #echo ""
     fi
+    if [[ "$status" =~ "WAIT" ]]; then
+        echo "** WARNING: WAIT status found, one or more backups have not been rotated yet in <24h."
+    fi
+    echo
     echo "** Status files content:"
     ls $LOGDIR/*.status >/dev/null  && cat $(ls $LOGDIR/*.status) ## ls to sort
     if [ "$MODE" = "--nagios" ]; then
