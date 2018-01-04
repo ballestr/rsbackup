@@ -76,9 +76,12 @@ The `install.sh` script helps in the setup, especially with merging the `/etc/cr
 ## Configuration checking
 The `configcheck.sh` script helps spotting typical configuration issues.
 Some other config issue cannot be found by configcheck:
-* insufficient `retain hourly`:
+* missing cronjobs: 
+  a configuration that is never called by a cronjob would not be noticed by configtest, nor by rsbackupstatus.
+* insufficient `retain hourly #`:
  the rsnapshot will work, but the `rot.status` will go STALE if there is no `hourly.X` from the day before for rsbackuprotate, because it gets deleted by rsnapshot.
  Make sure that the `retain` matches or exceeds the number of rsbackup invocations per day in crontab. 
+ rsbackupstatus will alert for a STALE rot.status file, after one day.
 * same `snapshot_root` in multiple configs: 
   use `configsummary.sh` to check manually
 
@@ -93,6 +96,7 @@ Alternative suggestions are welcome.
 - [x] fix rsbakstatus on no files present
 - [ ] configtest check for same `snapshot_root` in multiple configs
 - [x] rsbakstatus --mailerr to only send mails on errors
+- [ ] ? rsbakstatus --mailcheck to only send mails if nagios/icinga are not checking
 - [ ] Ansible role for server and target configuration (done, to be published)
 - [ ] Use a more restrictive sudo on the target side instead of root login.
 - [ ] Unify status and rotate report emails
@@ -100,4 +104,4 @@ Alternative suggestions are welcome.
 - [x] Let `rsbackup.sh` run multiple rsnapshot configurations, to simplify crontabs (done as `rsbackrotate_seq.sh`)
 - [ ] `rsbackrotate.sh` should check the lock file, to avoid the risk of copying an incomplete `hourly.0`
 - [ ] support for a temporarily disabled target host, e.g. cp/rsync missing dirs from `hourly.0' to `.sync` 
-- [ ] how would the rotation fail if the retain nr is too few to last one day? fix/check ? noticed by `rsbackupstatus.sh`?
+- [x] The rotation fails if the retain nr is too few to last one day. rsbackrotate writes a first status file to help rsbackupstatus spot the issue.
