@@ -72,6 +72,13 @@ function rsback_status() {
         echo "$(date) Checking status files in $HOST:$LOGDIR : $status"
     fi
 
+    if [[ "$status" =~ "NOBACKUP" ]]; then
+        echo "** ERROR: No backup status files found. Check your backup configuration (local or server pull)."
+        echo "** local rsnapshot config files:"
+        ls -la /opt/rsbak/etc/rsnapshot*.conf
+        echo "** Contents of $LOGDIR:"
+        ls -la $LOGDIR
+    fi
     ## report for each rsnapshot status to have a corresponding rotation status
     for f in $F2; do
         strot="$LOGDIR/$(basename $f .status).rotate.status"
@@ -104,7 +111,7 @@ function rsback_status() {
     fi
     if [ "$DEBUG" ]; then
         echo
-        echo "** DEBUG: Files in $LOGDIR by date:"
+        echo "** DEBUG: Status files in $LOGDIR by date:"
         (cd $LOGDIR && ls -lat *.status)
     fi
 }
