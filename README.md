@@ -79,9 +79,9 @@ Some other config issue cannot be found by configcheck:
 * missing cronjobs: 
   a configuration that is never called by a cronjob would not be noticed by configtest, nor by rsbackupstatus.
 * insufficient `retain hourly #`:
- the rsnapshot will work, but the `rot.status` will go STALE if there is no `hourly.X` from the day before for rsbackuprotate, because it gets deleted by rsnapshot.
+ the rsnapshot will work, but the `.rotate.status` will go STALE if there is no `hourly.X` from the day before for rsbackuprotate, because it gets deleted by rsnapshot.
  Make sure that the `retain` matches or exceeds the number of rsbackup invocations per day in crontab. 
- rsbackupstatus will alert for a STALE rot.status file, after one day.
+ `rsbackupstatus` will alert for a BADRETAIN STALE WAIT rot.status file, after one day.
 * same `snapshot_root` in multiple configs: 
   use `configsummary.sh` to check manually
 
@@ -102,6 +102,6 @@ Alternative suggestions are welcome.
 - [ ] Unify status and rotate report emails
 - [x] Provide a nagios/icinga check script, or add the functionality in `rsbackstatus.sh`
 - [x] Let `rsbackup.sh` run multiple rsnapshot configurations, to simplify crontabs (done as `rsbackrotate_seq.sh`)
-- [ ] `rsbackrotate.sh` should check the lock file, to avoid the risk of copying an incomplete `hourly.0`
+- [x] `rsbackrotate.sh` should check the lock file, to avoid the risk of copying an incomplete `hourly.0`
 - [ ] support for a temporarily disabled target host, e.g. cp/rsync missing dirs from `hourly.0' to `.sync` 
 - [x] The rotation fails if the retain nr is too few to last one day. rsbackrotate writes a first status file to help rsbackupstatus spot the issue.
