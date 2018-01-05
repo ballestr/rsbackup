@@ -15,7 +15,7 @@ function rsback_status() {
     status="OK"
     local MODE=$1
     local level="notice"
-    shopt -s nullglob
+    #shopt -s nullglob
 
     ## Note that wanting to have a summary status for the mail subject
     ## led to some code duplications. This function probably should be rearranged overall.
@@ -75,9 +75,9 @@ function rsback_status() {
     if [[ "$status" =~ "NOBACKUP" ]]; then
         echo "** ERROR: No backup status files found. Check your backup configuration (local or server pull)."
         echo "** local rsnapshot config files:"
-        ls -la /opt/rsbak/etc/rsnapshot*.conf
+        ls -la /opt/rsbak/etc/rsnapshot*.conf 2>&1
         echo "** Contents of $LOGDIR:"
-        ls -la $LOGDIR
+        ls -la $LOGDIR 2>&1
     fi
     ## report for each rsnapshot status to have a corresponding rotation status
     for f in $F2; do
@@ -103,7 +103,7 @@ function rsback_status() {
     fi
     echo
     echo "** Status files content:"
-    ls $LOGDIR/*.status >/dev/null  && cat $(ls $LOGDIR/*.status) ## ls to sort
+    ls $LOGDIR/*.status >/dev/null 2>&1 && cat $(ls $LOGDIR/*.status) ## ls to sort
     if [ "$MODE" = "--nagios" ]; then
         [ "$checkstatus" ] && return $checkstatus
         [ "$status" = "OK" ] || return 1
@@ -112,7 +112,7 @@ function rsback_status() {
     if [ "$DEBUG" ]; then
         echo
         echo "** DEBUG: Status files in $LOGDIR by date:"
-        (cd $LOGDIR && ls -lat *.status)
+        (cd $LOGDIR && ls -lat *.status 2>&1)
     fi
 }
 
