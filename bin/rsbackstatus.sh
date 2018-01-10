@@ -12,9 +12,10 @@ export LANG=C ## avoid funny stuff with sorting
 PATH="/usr/sbin:/sbin:$PATH"
 
 function rsback_status() {
-    status="OK"
+    status="OK" ## status is global
     local MODE=$1
     local level="notice"
+    local checkstatus
     #shopt -s nullglob
 
     ## Note that wanting to have a summary status for the mail subject
@@ -74,10 +75,14 @@ function rsback_status() {
 
     if [[ "$status" =~ "NOBACKUP" ]]; then
         echo "** ERROR: No backup status files found. Check your backup configuration (local or server pull)."
-        echo "** local rsnapshot config files:"
+        echo "-- local rsnapshot config files:"
         ls -la /opt/rsbak/etc/rsnapshot*.conf 2>&1
-        echo "** Contents of $LOGDIR:"
+        echo "-- Contents of $LOGDIR:"
         ls -la $LOGDIR 2>&1
+    fi
+    ## explain STALE status
+    if [[ "$status" =~ "STALE" ]]; then
+        echo "** ERROR: Stale status/log files found, some backups have not been done in more than $FRESHMAX hours."
     fi
     ## report for each rsnapshot status to have a corresponding rotation status
     for f in $F2; do
@@ -86,24 +91,31 @@ function rsback_status() {
             echo "** ERROR: not found matching $(basename $strot) for $(basename $f)"
         fi
     done
+    ## explain BADRETAIN status
     if [[ "$status" =~ "BADRETAIN" ]]; then
         echo "** ERROR: Stale WAIT status found, most probably incorrect configuration of rsnapshot retain number"
     fi
+    ## explain WAIT status
+    if [[ "$status" =~ "WAIT" ]]; then
+        echo "** WARNING: WAIT status found, one or more backups did not have the first rotation in <$FRESHMAX hours."
+        echo "   Note: this will become an error if rotation does not happen within $FRESHMAX hours from WAIT timestamp."
+    fi
+
+    ## report statuses
+    echo
     if [ "${stale}${stalelog}" ]; then
-        echo "** ERROR: Stale status/log files found (>$FRESHMAX hours) in $LOGDIR :"
+        echo "** STALE status/log files content :"
         for f in $stale $stalelog; do
-            echo "-- $(basename $f) :" # $(stat --format='%z' $f)"
+            echo "** $(basename $f) :" # $(stat --format='%z' $f)"
             ls -la $f | sed 's/^/  # /'
             tail -n5 $f | sed 's/^/  /'
         done
         #echo ""
     fi
-    if [[ "$status" =~ "WAIT" ]]; then
-        echo "** WARNING: WAIT status found, one or more backups have not been rotated yet in <24h."
-    fi
-    echo
-    echo "** Status files content:"
+    echo "-- Status files content:"
     ls $LOGDIR/*.status >/dev/null 2>&1 && cat $(ls $LOGDIR/*.status) ## ls to sort
+
+    ## return code for nagios servicecheck
     if [ "$MODE" = "--nagios" ]; then
         [ "$checkstatus" ] && return $checkstatus
         [ "$status" = "OK" ] || return 1
@@ -111,7 +123,7 @@ function rsback_status() {
     fi
     if [ "$DEBUG" ]; then
         echo
-        echo "** DEBUG: Status files in $LOGDIR by date:"
+        echo "-- DEBUG: Status files in $LOGDIR by date:"
         (cd $LOGDIR && ls -lat *.status 2>&1)
     fi
 }
