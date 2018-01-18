@@ -36,6 +36,7 @@ TODAY=$(date +%Y-%m-%d)
 
 CHANGES=0
 CHANGESday=0
+ARCHIVED=0
 
 if [ -f "$LOCK" ]; then
     echo "$(date -Iseconds) wait max $MAXWAIT min on $LOCK" | tee -a $LOG >> $BODY
@@ -77,6 +78,7 @@ for HOURLY in $(ls -dt $DIR/hourly.* 2>/dev/null); do
     #touch -r $HOURLY $DIR/$daily
     cp -al $HOURLY $DIR/$daily
     CHANGESday=$[CHANGESday+1] # do not report this
+    ARCHIVED=$[ARCHIVED+1]
 done
 }
 
@@ -163,6 +165,7 @@ if [ -f $LOCK ]; then
     ## do not touch the hourly if rsnapshot is running
     echo "  ALERT: skipping hourly, still running $LOCK ='$(<$LOCK)' $(ls -l $LOCK) " | tee -a $LOG >> $BODY
     CHANGES=999
+else
     rotate_hourly
 fi
 rotate_weekly
@@ -171,13 +174,13 @@ rotate_cleanup
 
 echo "$(date -Iseconds) done. CHANGES=$CHANGES CHANGESday=$CHANGESday" | tee -a $LOG >> $BODY
 
-logger -t rsbackup -p user.warn "rotate $CHANGES $CHANGESday"
+logger -t rsbackup -p user.warn "rotate $CFGB $CHANGES $CHANGESday"
 
 ## write a status file if anything has been touched
 STF="$LOGDIR/$CFGB.rotate.status"
-if [ $CHANGES -gt 0 -o $CHANGESday -gt 0 ] ; then
+if [ $CHANGES -eq 999 -o $ARCHIVED -gt 0 ] ; then
     if [ $CHANGES -eq 999 ] ; then ST="FAIL"; else ST="OK  "; fi
-    echo "$ST $(date +'%Y-%m-%d %H:%M') $CFGB rotate changes $CHANGES/$CHANGESday in $DIR" > $STF
+    echo "$ST $(date +'%Y-%m-%d %H:%M') $CFGB rotate changes $CHANGES archived $ARCHIVED in $DIR" > $STF
 fi
 ## if there is no status file, create one so it can go stale if no rotation is done
 if ! [ -f $STF ]; then
