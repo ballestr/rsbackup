@@ -73,7 +73,7 @@ function archive_hourly {
         daily="auto_${HDATE}_daily_${weekday}"
         ## nothing to do if it's present already
         [ -d $DIR/$daily ] && continue
-        echo "  Making $daily from $(basename $HOURLY)" | tee -a $LOG >> $BODY
+        echo "  Archiving $daily from $(basename $HOURLY)" | tee -a $LOG >> $BODY
         cp -al $HOURLY $DIR/$daily
         CHANGESday=$[CHANGESday+1] # do not report this
         ARCHIVED=$[ARCHIVED+1]
@@ -174,9 +174,9 @@ logger -t rsbackup -p user.warn "rotate $CFGB STATE=$STATE ARCHIVED=$ARCHIVED CH
 
 ## write a status file if anything has been touched
 STF="$LOGDIR/$CFGB.rotate.status"
-if [ $STATE -eq 999 -o $ARCHIVED -gt 0 ] ; then
-    if [ $STATE -eq 999 ] ; then ST="FAIL"; else ST="OK  "; fi
-    echo "$ST $(date +'%Y-%m-%d %H:%M') $CFGB rotate archived $ARCHIVED in $DIR" > $STF
+if [ $STATE -ne 0 -o $ARCHIVED -gt 0 ] ; then
+    if [ $STATE -ne 0 ] ; then ST="FAIL"; else ST="OK  "; fi
+    echo "$ST $(date +'%Y-%m-%d %H:%M') $CFGB rotate $ARCHIVED archived in $DIR" > $STF
 fi
 ## if there is no status file, create one so it can go stale if no rotation is done
 if ! [ -f $STF ]; then
@@ -184,8 +184,8 @@ if ! [ -f $STF ]; then
 fi
 
 ## report if there is any change except adding/removing a daily
-if [ $STATE -eq 999 ] ; then ST="FAIL"; else ST="OK $CHANGES changes"; fi
-if [ $CHANGES -gt 0 -o $CHANGESday -gt 2 ] ; then
+if [ $STATE -ne 0 ] ; then ST="FAIL $ARCHIVED archived"; else ST="OK $ARCHIVED archived $CHANGES changes"; fi
+if [ $STATE -ne 0 -o $CHANGES -gt 0 -o $CHANGESday -gt 2 ] ; then
   echo -e "\n\n----------------------------------------" >> $BODY
   if [ -d $DIR ] ; then
     df -hP $DIR 2>&1 >> $BODY
