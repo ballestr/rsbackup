@@ -1,4 +1,4 @@
-#!/opt/bin/bash
+#!/bin/bash
 ## Backups using rsnapshot
 ## with nice e-mails even on Synology ;-)
 ## Sergio Ballestrero, Jan 2017

@@ -1,4 +1,4 @@
-#!/opt/bin/bash
+#!/bin/bash
 ## write a status report file for a backup done by a remote host
 . /opt/rsbak/etc/rsbackup.rc || exit 1
 

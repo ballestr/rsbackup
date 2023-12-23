@@ -1,4 +1,4 @@
-#!/opt/bin/bash
+#!/bin/bash
 ## rotate rsnapshot backups with name-is-date
 ## sergio.ballestrero@gmail.com, 2011
 ## sergio.ballestrero@gmail.com, Jan 2017
