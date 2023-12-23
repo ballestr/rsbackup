@@ -1,4 +1,4 @@
-#!/opt/bin/bash
+#!/bin/bash
 ## send status mail for rsbak
 ## Sergio.Ballestero@gmail.com January 2017
 ## support exit codes etc for nagios/icinga servicecheck

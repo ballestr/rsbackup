@@ -1,4 +1,4 @@
-#!/opt/bin/bash
+#!/bin/bash
 ## quick-and-dirty setup script
 ## assume that rsbackup has been checked-out unders /opt/rsbak
 ## setup crontab 
