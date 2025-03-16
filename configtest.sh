@@ -38,9 +38,9 @@ function cfgcheck() {
     local bf=$(basename $cfg .conf)
     local parval=$(grep ^$parname $cfg | sed "s/$parname[[:space:]]*//")
     if [ "$parval" != "$refval" ]; then
-	echo "### checking $parname $refval : not matched '$parval'"
-	egrep -n "$parname" $cfg | sed 's/^/  /'
-	R=$[R+1]
+        echo "### checking $parname $refval : not matched '$parval'"
+        grep -E -n "$parname" $cfg | sed 's/^/  /'
+        R=$[R+1]
     fi
 }    
 
@@ -53,10 +53,10 @@ for cfg in etc/rsnapshot.*.conf; do
     rsnapshot -v -c $cfg configtest
     r=$?
     R=$[R+r]
-    DIR=$(egrep "^snapshot_root" $cfg | awk '{print $2}') 2>/dev/null
+    DIR=$(grep -E "^snapshot_root" $cfg | awk '{print $2}') 2>/dev/null
     if ! [ -d $DIR ]; then
-	echo "### checking snapshot_root '$DIR' : not present or not a directory"
-	R=$[R+1]
+        echo "### checking snapshot_root '$DIR' : not present or not a directory"
+        R=$[R+1]
     fi
     ## check lockfile
     lockdir="/var/run"
@@ -65,25 +65,25 @@ for cfg in etc/rsnapshot.*.conf; do
     cfgcheck logfile "$LOGDIR/$bf.log"
     
     ## check SSH
-    sshdest=$(grep ^backup $cfg | grep @ | cut -f2 | cut -d: -f1 | sort | uniq)
+    sshdest=$(grep -E '^backup[[:space:]]*.*@.*:.*' $cfg | cut -f2 | cut -d: -f1 | sort | uniq)
     if [ "$sshdest" ]; then
         echo -n "### checking config $cfg for ssh_args containing '-F $SSHCFG': "
         ## don't use cfgcheck, allow additional options after the -F 
-	egrep -q "^ssh_args.*-F $SSHCFG" $cfg
-	if [ $? -ne 0 ]; then
-	    echo "failed:"
-	    egrep -n "ssh_args" $cfg | sed 's/^/  /'
-	    R=$[R+1]
-	else
-	    echo "OK"
-	fi
+        grep -E -q "^ssh_args.*-F $SSHCFG" $cfg
+        if [ $? -ne 0 ]; then
+            echo "failed:"
+            grep -E -n "ssh_args" $cfg | sed 's/^/  /'
+            R=$[R+1]
+        else
+            echo "OK"
+        fi
         for sd in $sshdest; do 
-	    echo "### checking SSH : ssh -F $SSHCFG $sd rsbackreport.sh configtest :"
-	    ssh -F $SSHCFG $sd rsbackreport.sh configtest
-	    r=$?
-	    [ $r -eq 0 ] || echo "-- failed, r=$r"
-	    R=$[R+r]
-	done
+            echo "### checking SSH : ssh -F $SSHCFG $sd rsbackreport.sh configtest :"
+            ssh -F $SSHCFG $sd rsbackreport.sh configtest
+            r=$?
+            [ $r -eq 0 ] || echo "-- failed, r=$r"
+            R=$[R+r]
+        done
     fi
 
 done
@@ -94,25 +94,25 @@ if [ $N -eq 0 ]; then
 fi
 
 if [ -d /etc/cron.d ]; then
-  cronfile="/etc/cron.d/rsbackup_status*"
-  if [ -z "$(ls $cronfiles)" ] ; then
-     echo "Missing crontab files - at least $cronfile"
-     R=$[R+1]
-  fi
+    cronfile="/etc/cron.d/rsbackup_status*"
+    if [ -z "$(ls $cronfiles)" ] ; then
+        echo "Missing crontab files - at least $cronfile"
+        R=$[R+1]
+    fi
 else
-  ## Synology DSM only uses /etc/crontab :-(
-  grep "/opt/rsbak" /etc/crontab > .tmp_crontab.rsbak
-  if ! diff -s etc/rsbackup.cron .tmp_crontab.rsbak ; then
-    echo "* /etc/crontab out of sync"
-    R=$[R+1]
-    #echo "# updating /etc/crontab"
-    #echo "# cp crontab /etc/crontab; killall -s HUP crond"
-    #cp /etc/crontab /etc/crontab.bak.$(date +%Y%m%d%H%M)
-    #grep -v "/opt/rsbak" /etc/crontab > .tmp_crontab.clean
-    #cat crontab.clean etc/rsbak.cron > /etc/crontab
-    #killall -s HUP crond
-  fi
-  rm .tmp_crontab.rsbak
+    ## Synology DSM6 only uses /etc/crontab :-(
+    grep "/opt/rsbak" /etc/crontab > .tmp_crontab.rsbak
+    if ! diff -s etc/rsbackup.cron .tmp_crontab.rsbak ; then
+        echo "* /etc/crontab out of sync"
+        R=$[R+1]
+        #echo "# updating /etc/crontab"
+        #echo "# cp crontab /etc/crontab; killall -s HUP crond"
+        #cp /etc/crontab /etc/crontab.bak.$(date +%Y%m%d%H%M)
+        #grep -v "/opt/rsbak" /etc/crontab > .tmp_crontab.clean
+        #cat crontab.clean etc/rsbak.cron > /etc/crontab
+        #killall -s HUP crond
+    fi
+    rm .tmp_crontab.rsbak
 fi
 echo "## configtest result: $R"
 exit $R
